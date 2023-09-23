@@ -14,97 +14,6 @@ mod app {
     use stm32f1xx_hal::prelude::*;
     use stm32f1xx_hal::gpio::ErasedPin;    
 
-    // Option 1
-    pub trait OperationStrategy
-    {
-        fn process_frame(&mut self, f: u32);
-        fn read_state(&mut self) -> u32;
-    }
-
-    pub struct Di {
-        inputs: Vec<ErasedPin<stm32f1xx_hal::gpio::Input>, 16>,
-    }
-
-    impl Di 
-    {
-        pub fn new() -> Self
-        {
-            Self{inputs: Vec::new()}
-        }
-    }
-
-    pub struct Do {
-        outputs: Vec<ErasedPin<stm32f1xx_hal::gpio::Output>, 16>
-    }
-
-    impl Do
-    {
-        pub fn new() -> Self
-        {
-            Self{outputs: Vec::new()}
-        }
-    }
-
-    impl OperationStrategy for Di {
-        fn process_frame(&mut self, f: u32) 
-        {
-            defmt::println!("Di - process_frame");
-        }
-
-        fn read_state(&mut self) -> u32
-        {
-            defmt::println!("Di - read inputs");
-            0
-        }
-    }
-
-    impl OperationStrategy for Do {
-        fn process_frame(&mut self, f: u32) 
-        {
-            defmt::println!("Do - set outputs");
-        }
-
-        fn read_state(&mut self) -> u32
-        {
-            defmt::println!("Do - read outputs");
-            0
-        }
-    }
-
-    pub enum DevType {
-        Di(Di),
-        Do(Do),
-    }
-
-    impl DevType
-    {
-        pub fn new_do() -> Self
-        {
-            DevType::Do(Do::new())
-        }
-
-        pub fn new_di() -> Self
-        {
-            DevType::Di(Di::new())
-        }
-
-        fn process_frame(&mut self, f: u32) 
-        {
-            match self {
-                DevType::Di(d) => { d.process_frame(f); },
-                DevType::Do(d) => { d.process_frame(f); }
-            };
-        }
-
-        fn read_state(&mut self) -> u32 
-        {
-            match self {
-                DevType::Di(d) => { d.read_state() },
-                DevType::Do(d) => { d.read_state() }
-            }
-        }
-    }
-
     // Option 2
 
     // 1. Frame -> operate ( DO -> set outputs, DI -> set parameters)
@@ -159,7 +68,6 @@ mod app {
     #[shared]
     struct Shared {
         dido: DiDo,
-        // dev_type: DevType,
     }
 
     #[local]
@@ -174,12 +82,6 @@ mod app {
         let dev_type_selector = gpioa.pa0.into_pull_down_input(&mut gpioa.crl);
 
         let dido = DiDo::new_from(dev_type_selector.is_high());
-        // let dt = DevType::new_di();
-        
-        // let dev_type = if dev_type_selector.is_high() { di_read_state } else { do_out };
         (Shared {dido}, Local {}, init::Monotonics())
-
-        // let dev_type = if dev_type_selector.is_high() { DevType::new_di() } else {  DevType::new_do() };
-        // (Shared {dev_type: dev_type}, Local {}, init::Monotonics())
     }
 }
