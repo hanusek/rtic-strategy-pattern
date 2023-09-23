@@ -1,0 +1,17 @@
+[target.'cfg(all(target_arch = "arm", target_os = "none"))']
+runner = "probe-run --chip STM32F103VE ./target/thumbv7m-none-eabi/release/dido-firmware"
+rustflags = [
+"-C", "link-arg=-Tlink.x",
+"-C", "link-arg=--nmagic",
+"-C", "link-arg=-Tdefmt.x",
+"-C", "linker=flip-link"
+]
+
+[build]
+target = "thumbv7m-none-eabi"
+
+[alias]
+test_all = "test --all --target=x86_64-unknown-linux-gnu"
+build_stm32 = "build --target=thumbv7m-none-eabi"
+run_clippy = "clippy --target=thumbv7m-none-eabi"
+run_flash = "run --debug --target thumbv7m-none-eabi"

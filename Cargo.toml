@@ -1,0 +1,28 @@
+[package]
+name = "rtic-strategy-pattern"
+description = "RTIC Tests"
+license = "MIT OR Apache-2.0"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+embedded-hal = "0.2.6"
+cortex-m-rtic = "1.1.4"
+panic-rtt-target = { version = "0.1.2", features = ["cortex-m"] }
+rtt-target = { version = "0.3.1", features = ["cortex-m"] }
+systick-monotonic = "1.0.0"
+panic-halt = "0.2.0"
+defmt = "0.3.5"
+defmt-rtt = "0.4.0"
+cortex-m = {version="0.7.7" , features = ["critical-section-single-core"]}
+bxcan = "0.7.0"
+nb = "1.1.0"
+heapless = "0.7.16"
+flip-link = "0.1.1"
+
+[dependencies.stm32f1xx-hal]
+version = "0.10.0"
+features = ["rt", "stm32f103", "high"]
+[features] 
+test = []
