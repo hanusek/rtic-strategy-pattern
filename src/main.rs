@@ -10,32 +10,156 @@ use panic_halt as _;
 
 #[rtic::app(device = stm32f1xx_hal::pac)]
 mod app {
+    use heapless::Vec;
     use stm32f1xx_hal::prelude::*;
+    use stm32f1xx_hal::gpio::ErasedPin;    
 
-    pub trait OperationStrategy: Sized + 'static
+    // Option 1
+    pub trait OperationStrategy
     {
-        fn operate(&mut self);
+        fn process_frame(&mut self, f: u32);
+        fn read_state(&mut self) -> u32;
     }
 
-    struct Di{}
-    impl OperationStrategy for Di{
-        fn operate(&mut self)
+    pub struct Di {
+        inputs: Vec<ErasedPin<stm32f1xx_hal::gpio::Input>, 16>,
+    }
+
+    impl Di 
+    {
+        pub fn new() -> Self
         {
-            defmt::println!("Di - operate on inputs (read inputs)");
+            Self{inputs: Vec::new()}
         }
     }
 
-    struct Do{}
-    impl OperationStrategy for Do{
-        fn operate(&mut self)
+    pub struct Do {
+        outputs: Vec<ErasedPin<stm32f1xx_hal::gpio::Output>, 16>
+    }
+
+    impl Do
+    {
+        pub fn new() -> Self
         {
-            defmt::println!("Do - operate on outputs (write outputs)");
+            Self{outputs: Vec::new()}
+        }
+    }
+
+    impl OperationStrategy for Di {
+        fn process_frame(&mut self, f: u32) 
+        {
+            defmt::println!("Di - process_frame");
+        }
+
+        fn read_state(&mut self) -> u32
+        {
+            defmt::println!("Di - read inputs");
+            0
+        }
+    }
+
+    impl OperationStrategy for Do {
+        fn process_frame(&mut self, f: u32) 
+        {
+            defmt::println!("Do - set outputs");
+        }
+
+        fn read_state(&mut self) -> u32
+        {
+            defmt::println!("Do - read outputs");
+            0
+        }
+    }
+
+    pub enum DevType {
+        Di(Di),
+        Do(Do),
+    }
+
+    impl DevType
+    {
+        pub fn new_do() -> Self
+        {
+            DevType::Do(Do::new())
+        }
+
+        pub fn new_di() -> Self
+        {
+            DevType::Di(Di::new())
+        }
+
+        fn process_frame(&mut self, f: u32) 
+        {
+            match self {
+                DevType::Di(d) => { d.process_frame(f); },
+                DevType::Do(d) => { d.process_frame(f); }
+            };
+        }
+
+        fn read_state(&mut self) -> u32 
+        {
+            match self {
+                DevType::Di(d) => { d.read_state() },
+                DevType::Do(d) => { d.read_state() }
+            }
+        }
+    }
+
+    // Option 2
+
+    // 1. Frame -> operate ( DO -> set outputs, DI -> set parameters)
+    // 2. Read state -> Frame (Do -> read outputs, DI -> read inputs)
+
+    fn do_process_frame(t: &mut DiDo, frame: u32) {
+        //TODO: decode frame and operate on Do card (set outputs)
+    }
+
+    fn di_process_frame(t: &mut DiDo, frame: u32) {
+        //TODO: decode frame and operate on Di card (e.g. set parameters of filter)
+    }
+    
+    fn do_read_state(t: &mut DiDo) -> u32 {
+        0
+    }
+
+    fn di_read_state(t: &mut DiDo) -> u32 {
+        0
+    }
+
+    pub struct DiDo
+    {
+        inputs : Vec<ErasedPin<stm32f1xx_hal::gpio::Input>, 16>,
+        outputs : Vec<ErasedPin<stm32f1xx_hal::gpio::Output>, 16>,
+        read_state_fn: fn(t: &mut DiDo) -> u32,
+        process_frame: fn(t: &mut DiDo, frame: u32)
+    }
+
+    impl DiDo
+    {
+        pub fn new_from(state: bool) -> Self {
+            if state {
+                Self{ 
+                    inputs: Vec::new(), 
+                    outputs: Vec::new(),
+                    read_state_fn: do_read_state,
+                    process_frame: do_process_frame
+                }
+            }
+            else {
+                Self{ 
+                    inputs: Vec::new(), 
+                    outputs: Vec::new(),
+                    read_state_fn: di_read_state,
+                    process_frame: di_process_frame
+                }
+            }
         }
     }
 
     #[shared]
     struct Shared {
-        dev_type: dyn OperationStrategy //not working
+        dido: DiDo,
+        // dev_type: DevType,
     }
 
     #[local]
@@ -49,14 +173,13 @@ mod app {
         // DI or DO
         let dev_type_selector = gpioa.pa0.into_pull_down_input(&mut gpioa.crl);
 
-        let dev_type;
-        if dev_type_selector.is_high() {
-            dev_type = Di{};
-        }
-        else {
-            dev_type = Do{};
-        }
+        let dido = DiDo::new_from(dev_type_selector.is_high());
+        // let dt = DevType::new_di();
         
-        (Shared {dev_type}, Local {}, init::Monotonics())
+        // let dev_type = if dev_type_selector.is_high() { di_read_state } else { do_out };
+        (Shared {dido}, Local {}, init::Monotonics())
+
+        // let dev_type = if dev_type_selector.is_high() { DevType::new_di() } else {  DevType::new_do() };
+        // (Shared {dev_type: dev_type}, Local {}, init::Monotonics())
     }
 }
