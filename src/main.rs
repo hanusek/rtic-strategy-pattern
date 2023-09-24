@@ -29,19 +29,19 @@ mod app {
 
     impl DiDo
     {
-        fn do_process_frame(t: &mut DiDo, frame: u32) {
+        fn do_process_frame(&mut self, frame: u32) {
             //TODO: decode frame and operate on Do card (set outputs)
         }
 
-        fn di_process_frame(t: &mut DiDo, frame: u32) {
+        fn di_process_frame(&mut self, frame: u32) {
             //TODO: decode frame and operate on Di card (e.g. set parameters of filter)
         }
         
-        fn do_read_state(t: &mut DiDo) -> u32 {
+        fn do_read_state(&mut self) -> u32 {
             0
         }
 
-        fn di_read_state(t: &mut DiDo) -> u32 {
+        fn di_read_state(&mut self) -> u32 {
             0
         }
 
