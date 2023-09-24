@@ -19,22 +19,6 @@ mod app {
     // 1. Frame -> operate ( DO -> set outputs, DI -> set parameters)
     // 2. Read state -> Frame (Do -> read outputs, DI -> read inputs)
 
-    fn do_process_frame(t: &mut DiDo, frame: u32) {
-        //TODO: decode frame and operate on Do card (set outputs)
-    }
-
-    fn di_process_frame(t: &mut DiDo, frame: u32) {
-        //TODO: decode frame and operate on Di card (e.g. set parameters of filter)
-    }
-    
-    fn do_read_state(t: &mut DiDo) -> u32 {
-        0
-    }
-
-    fn di_read_state(t: &mut DiDo) -> u32 {
-        0
-    }
-
     pub struct DiDo
     {
         inputs : Vec<ErasedPin<stm32f1xx_hal::gpio::Input>, 16>,
@@ -45,21 +29,37 @@ mod app {
 
     impl DiDo
     {
+        fn do_process_frame(t: &mut DiDo, frame: u32) {
+            //TODO: decode frame and operate on Do card (set outputs)
+        }
+
+        fn di_process_frame(t: &mut DiDo, frame: u32) {
+            //TODO: decode frame and operate on Di card (e.g. set parameters of filter)
+        }
+        
+        fn do_read_state(t: &mut DiDo) -> u32 {
+            0
+        }
+
+        fn di_read_state(t: &mut DiDo) -> u32 {
+            0
+        }
+
         pub fn new_from(state: bool) -> Self {
             if state {
                 Self{ 
                     inputs: Vec::new(), 
                     outputs: Vec::new(),
-                    read_state_fn: do_read_state,
-                    process_frame: do_process_frame
+                    read_state_fn: DiDo::do_read_state,
+                    process_frame: DiDo::do_process_frame
                 }
             }
             else {
                 Self{ 
                     inputs: Vec::new(), 
                     outputs: Vec::new(),
-                    read_state_fn: di_read_state,
-                    process_frame: di_process_frame
+                    read_state_fn: DiDo::di_read_state,
+                    process_frame: DiDo::di_process_frame
                 }
             }
         }
